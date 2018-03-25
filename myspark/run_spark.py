@@ -2,20 +2,20 @@
 
 from pyspark.sql import SparkSession
 from pyspark.sql.column import Column, _to_java_column, _to_seq
-from pyspark.sql.functions import column
+from pyspark.sql.functions import column, size, explode, lit
 from pyspark.sql.types import IntegerType
 
 spark = SparkSession.builder.getOrCreate()
 
 
-def do_dec_scala(col):
-    _add_one = spark.sparkContext._jvm.com.example.scalaoperations.ScalaSparkUDF.getUDFDecrementByOne().apply
+def do_split(col):
+    _add_one = spark.sparkContext._jvm.com.example.scalaoperations.ScalaSparkUDF.getSentenceSplitter().apply
     print(_add_one)
     return Column(_add_one(_to_seq(spark.sparkContext, [col], _to_java_column)))
 
 
-def do_add_scala(col):
-    _add_one = spark.sparkContext._jvm.com.example.scalaoperations.ScalaSparkUDF.getUDFIncrementByOne().apply
+def do_tokenise(col):
+    _add_one = spark.sparkContext._jvm.com.example.scalaoperations.ScalaSparkUDF.getTokeniser().apply
     print(_add_one)
     return Column(_add_one(_to_seq(spark.sparkContext, [col], _to_java_column)))
 
@@ -31,14 +31,19 @@ def do_add_java(col):
 
 
 def main():
-    df = spark.createDataFrame(range(10), IntegerType())
+    df = spark.read.text('/var/tmp/coursera-data/final/en_US/en_US.news.txt')
+    # df = spark.createDataFrame(range(int(1e6)), IntegerType())
     data_out_scala = (
         df
-        .withColumn('value_inc', do_add_scala('value'))
-        .withColumn('value_dec', do_dec_scala('value'))
+        .withColumn('sentences', do_split('value'))
+        .select(explode(column('sentences')).alias('sentence'))
+        .withColumn('tokens', do_tokenise('sentence'))
+        .select(explode(column('tokens')))
+        .groupBy('col')
+        .count()
+        .orderBy('count', ascending=False)
     )
-    print(data_out_scala)
-    print(data_out_scala.collect())
+    data_out_scala.show()
 
 
 if __name__ == '__main__':

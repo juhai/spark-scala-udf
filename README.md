@@ -1,4 +1,11 @@
 # spark-scala-udf
+
+## Dowdload the HCCorpora files
+
+```$bash
+./setup.sh
+``` 
+
 Simple examples on how to use Scala UDF from pyspark
 
 ```
@@ -11,6 +18,7 @@ Simple examples on how to use Scala UDF from pyspark
     run_spark.py
 ```
 
-This runs simple task with a dataframe with numbers from 0..9, by adding one column with val++ and one column with val--.
-The operation is done using a Java function defined in sparkoperations package. The interface is implemented in Scala in
+This runs a word count task with one of the files in the database.
+
+The operation is done using a Java functions defined in sparkoperations package. The interface is implemented in Scala in
 scalaudf.
